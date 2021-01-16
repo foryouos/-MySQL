@@ -6,7 +6,7 @@ db=pymysql.connect(
     host="localhost",
     user="root",
     password="123.",
-    database="yu_test"
+    database="douban"
 )
 cursor=db.cursor()
 print("连接数据库root用户成功")
@@ -40,6 +40,9 @@ try:
         m_type varchar(20),
         m_url varchar(50),
         m_text text,
+        w_1090 varchar(300),
+        w_bde4 varchar(300),
+        w_addrk varchar(300),
         index(m_name),
         index(m_author),
         index(m_country),
@@ -64,7 +67,7 @@ if __name__ =="__main__":
     list_content_text=[]
     #for type in list:
     for num in range(0,250,25):
-        print("抓取书籍数据中，进度百分比：....."+ str(int(num)/2.5)+"%")
+        print("抓取书籍数据中，进度百分比：....."+ str(int(num)/2.5+10)+"%")
         url="https://book.douban.com/top250?start="+str(num)
         #url="https://book.douban.com/top250"
         body=requests.get(url=url,headers=header)
@@ -144,20 +147,26 @@ if __name__ =="__main__":
     list_content_time=[]
     list_content_score=[]
     list_content_text=[]
+    watch_in_1090=[]
+    watch_in_bde4=[]
+    watch_in_ddrk=[]
     #for type in list:
     for num in range(0,250,25):
-        print("抓取数据电影排行榜中，进度百分比：....."+ str(int(num)/2.5)+"%")
+        print("抓取数据电影排行榜中，进度百分比：....."+ str(int(num)/2.5+10)+"%")
         url="https://movie.douban.com/top250?start="+str(num)
         body=requests.get(url=url,headers=header)
         body.encoding=body.apparent_encoding
         page=body.text
         tree = etree.HTML(page)
         #print(page)
-        #电影名称
+        #电影名称,并通过名称获得url
         b_name = tree.xpath('//div[@class="info"]//div[@class="hd"]//a//span[@class="title"][1]//text()')
         for b_name_one in b_name:
             list_content_name.append(b_name_one)
-        #print(b_name)
+            watch_in_1090.append("http://1090ys1.com/search.html?wd="+str(b_name_one))
+            watch_in_bde4.append("https://bde4.cc/search/"+str(b_name_one))
+            watch_in_ddrk.append("https://www.dogedoge.com/results?q=site%3Addrk.me+"+str(b_name_one))
+        #print(b_name)douban
         #电影作者
         b_author = tree.xpath('//div[@class="info"]//div[@class="bd"]//p[1]//text()[1]')
         b_author=[x.strip() for x in b_author if x.strip() != '']
@@ -209,9 +218,12 @@ if __name__ =="__main__":
         type=list_content_type[b_id-1]
         url_content = list_content_url[b_id - 1]
         text = list_content_text[b_id - 1]
-        insert = [b_id, name, author, score,country,time,type,url_content, text]
+        w_1090=watch_in_1090[b_id-1]
+        w_bde4=watch_in_bde4[b_id-1]
+        w_addrk=watch_in_ddrk[b_id-1]
+        insert = [b_id, name, author, score,country,time,type,url_content, text,w_1090,w_bde4,w_addrk]
         #print(insert)
-        sql_content = """insert into movie(m_id,m_name,m_author,m_score,m_country,m_time,m_type,m_url,m_text) values(%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
+        sql_content = """insert into movie(m_id,m_name,m_author,m_score,m_country,m_time,m_type,m_url,m_text,w_1090,w_bde4,w_addrk) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
         cursor.execute(sql_content, insert)
     db.commit()
     print("数据库电影插入数据成功！！")
